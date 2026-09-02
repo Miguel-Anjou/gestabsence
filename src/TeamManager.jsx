@@ -360,6 +360,7 @@ function EditUserForm({ user: emp, depts, allUsers, currentManagerId, currentMan
     soldeConges:  emp.soldeConges,
     soldeRTT:     emp.soldeRTT    || 0,
     soldeHeures:  emp.soldeHeures || 0,
+    canRtt:     emp.canRtt !== false,
     password:   "",
     horaire: { ...DEFAULT_HORAIRE, ...(emp.horaire||{}) },
   });
@@ -400,7 +401,15 @@ function EditUserForm({ user: emp, depts, allUsers, currentManagerId, currentMan
           <input style={inp} type="password" placeholder="(laisser vide = inchangé)" value={data.password} onChange={e => setData({...data, password: e.target.value})} />
         </Field>
         <Field label="Solde CP (jours)"><input style={inp} type="number" min="0" value={data.soldeConges} onChange={e => setData({...data, soldeConges: parseInt(e.target.value)||0})} /></Field>
-        <Field label="Solde RTT (jours)"><input style={inp} type="number" min="0" value={data.soldeRTT} onChange={e => setData({...data, soldeRTT: parseFloat(e.target.value)||0})} /></Field>
+        <Field label="RTT / Repos">
+          <select style={inp} value={data.canRtt ? "yes" : "no"} onChange={e => setData({...data, canRtt: e.target.value === "yes"})}>
+            <option value="yes">RTT / Repos</option>
+            <option value="no">Aucun</option>
+          </select>
+        </Field>
+        {data.canRtt && (
+          <Field label="Solde RTT (jours)"><input style={inp} type="number" min="0" value={data.soldeRTT} onChange={e => setData({...data, soldeRTT: parseFloat(e.target.value)||0})} /></Field>
+        )}
         <Field label="Solde HS (heures)"><input style={inp} type="number" min="0" step="0.5" value={data.soldeHeures} onChange={e => setData({...data, soldeHeures: parseFloat(e.target.value)||0})} /></Field>
       </div>
       <HoraireEditor horaire={data.horaire} onChange={h => setData({...data, horaire: h})} totalH={totalH} />
