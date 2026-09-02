@@ -46,6 +46,9 @@ export default function TeamManager({ user, users, requests, onAddUser, onUpdate
     return managedDepts.includes(u.department);
   };
 
+  // Un chef d'équipe ne peut pas modifier un autre chef d'équipe.
+  const canEditUser = (emp) => !(isTeamLeader && emp.role === "teamleader");
+
   // Tous les salariés actifs visibles
   const allActive = users.filter(u =>
     (u.role === "employee" || u.role === "manager" || u.role === "teamleader") &&
@@ -242,7 +245,9 @@ export default function TeamManager({ user, users, requests, onAddUser, onUpdate
                           style={{ background: isInTeam ? "#FCEBEB" : "#E1F5EE", border: "none", borderRadius: "6px", padding: "5px 9px", cursor: "pointer", fontSize: "13px", color: isInTeam ? "#A32D2D" : "#0F6E56" }}>
                           {isInTeam ? "✖" : "➕"}
                         </button>
-                        <Btn size="sm" variant="ghost" onClick={() => setEditUser(emp)}>✎</Btn>
+                        {canEditUser(emp) && (
+                          <Btn size="sm" variant="ghost" onClick={() => setEditUser(emp)}>✎</Btn>
+                        )}
                         {(isAdmin || isManager) && (
                           <button onClick={() => setConfirmArchive(emp)} title="Archiver ce salarié"
                             style={{ background: "#f5f5f5", border: "none", borderRadius: "6px", padding: "5px 9px", cursor: "pointer", fontSize: "13px", color: "#888" }}>
