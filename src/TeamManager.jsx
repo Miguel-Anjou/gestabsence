@@ -237,7 +237,7 @@ export default function TeamManager({ user, users, requests, onAddUser, onUpdate
                       <>
                         {canEditUser(emp) && <span style={{ fontSize: "11px", background: "#E1F5EE", color: "#0F6E56", padding: "3px 7px", borderRadius: "6px" }}>{emp.soldeConges}j CP</span>}
                         {canEditUser(emp) && (emp.soldeRTT||0)>0 && <span style={{ fontSize: "11px", background: "#E0F2FE", color: "#0369A1", padding: "3px 7px", borderRadius: "6px" }}>{emp.soldeRTT}j RTT</span>}
-                        {(emp.soldeHeures||0)>0 && <span style={{ fontSize: "11px", background: "#FEF3C7", color: "#B45309", padding: "3px 7px", borderRadius: "6px" }}>{emp.soldeHeures}h HS</span>}
+                        {canEditUser(emp) && (emp.soldeHeures||0)>0 && <span style={{ fontSize: "11px", background: "#FEF3C7", color: "#B45309", padding: "3px 7px", borderRadius: "6px" }}>{emp.soldeHeures}h HS</span>}
                         {pending>0 && <span style={{ fontSize: "11px", background: "#FAEEDA", color: "#BA7517", padding: "3px 7px", borderRadius: "6px" }}>{pending} ⏳</span>}
                         <button
                           onClick={() => handleToggleTeam(emp.id)}
