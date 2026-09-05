@@ -128,6 +128,8 @@ export default function TeamCalendar({ users, requests, managedDepts, teamUserId
       startDate: existing.startDate, endDate: existing.endDate || existing.startDate,
       reason: existing.reason || "", absenceMotif: existing.absenceMotif || "",
       heureDebut: existing.heureDebut || "", heureFin: existing.heureFin || "",
+      retardH: existing.durationMinutes ? String(Math.floor(existing.durationMinutes / 60)) : "",
+      retardM: existing.durationMinutes ? String(existing.durationMinutes % 60) : "",
     });
   };
 
@@ -137,7 +139,7 @@ export default function TeamCalendar({ users, requests, managedDepts, teamUserId
     setForm({
       type: "absence", subType: "full",
       startDate, endDate,
-      reason: "", absenceMotif: "", heureDebut: "", heureFin: "",
+      reason: "", absenceMotif: "", heureDebut: "", heureFin: "", retardH: "", retardM: "",
     });
   };
 
@@ -151,12 +153,21 @@ export default function TeamCalendar({ users, requests, managedDepts, teamUserId
   const isHalfDay  = form.subType === "morning" || form.subType === "afternoon";
     const isRetard   = form.type === "retard";
     const isAbsence  = form.type === "absence";
-    const useHoraire = (isRetard || isAbsence) && form.heureDebut && form.heureFin;
+    const useHoraire = isAbsence && form.heureDebut && form.heureFin;
     const absenceMultiDay = isAbsence && !useHoraire && form.subType === "full";
+
+    let retardMinutes = 0;
+    if (isRetard) {
+      retardMinutes = (parseInt(form.retardH, 10) || 0) * 60 + (parseInt(form.retardM, 10) || 0);
+      if (retardMinutes <= 0) { setFormError("Veuillez indiquer la durée du retard."); return; }
+    }
 
     let days_count = 0.5;
     let durationMinutes = null;
-    if (useHoraire) {
+    if (isRetard) {
+      durationMinutes = retardMinutes;
+      days_count = Math.round(retardMinutes / 60 * 100) / 100;
+    } else if (useHoraire) {
       const [dh,dm] = form.heureDebut.split(":").map(Number);
       const [fh,fm] = form.heureFin.split(":").map(Number);
       const diff = (fh*60+fm)-(dh*60+dm);
@@ -233,7 +244,7 @@ export default function TeamCalendar({ users, requests, managedDepts, teamUserId
   const isRetard   = form.type === "retard";
   const isAbsence  = form.type === "absence";
   const showEndDate= !isHalfDay && !isRetard && !(isAbsence && (form.heureDebut || form.subType !== "full"));
-  const showHoraires= isRetard || isAbsence;
+  const showHoraires= isAbsence;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -607,6 +618,25 @@ export default function TeamCalendar({ users, requests, managedDepts, teamUserId
                 </div>
               )}
             </div>
+
+            {/* Durée du retard : obligatoire */}
+            {isRetard && (
+              <div style={fs}>
+                <label style={ls}>Durée du retard *</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ fontSize: "11px", color: "#888", display: "block", marginBottom: "3px" }}>Heures</label>
+                    <input style={is} type="number" min="0" max="23" step="1" value={form.retardH || ""}
+                      onChange={e => setForm({...form, retardH: e.target.value})} placeholder="0" />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "11px", color: "#888", display: "block", marginBottom: "3px" }}>Minutes</label>
+                    <input style={is} type="number" min="0" max="59" step="1" value={form.retardM || ""}
+                      onChange={e => setForm({...form, retardM: e.target.value})} placeholder="0" />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Horaires */}
             {showHoraires && (

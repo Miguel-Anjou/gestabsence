@@ -35,7 +35,7 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
   const [teamSearch, setTeamSearch] = useState("");
   const [reqSearch, setReqSearch] = useState("");
   const [showAddRequest, setShowAddRequest] = useState(false);
-  const [addReqForm, setAddReqForm] = useState({ userId: "", type: "absence", subType: "full", startDate: "", endDate: "", reason: "", absenceMotif: "", heureDebut: "", heureFin: "" });
+  const [addReqForm, setAddReqForm] = useState({ userId: "", type: "absence", subType: "full", startDate: "", endDate: "", reason: "", absenceMotif: "", heureDebut: "", heureFin: "", retardH: "", retardM: "" });
   const [addReqError, setAddReqError] = useState("");
   const [showAddUser, setShowAddUser] = useState(false);
   const [showPersonalForm, setShowPersonalForm] = useState(false);
@@ -139,17 +139,29 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
     const isHalfDay  = f.subType === "morning" || f.subType === "afternoon";
     const isRetard   = f.type === "retard";
     const isAbsence  = f.type === "absence";
-    const useHoraire = (isRetard || isAbsence) && f.heureDebut && f.heureFin;
+    const useHoraire = isAbsence && f.heureDebut && f.heureFin;
     // Absence sans horaires et journée entière → peut avoir une date de fin
     const absenceMultiDay = isAbsence && !useHoraire && f.subType === "full";
     if (!isHalfDay && !isRetard && !isAbsence && !f.endDate) { setAddReqError("Veuillez indiquer une date de fin."); return; }
     if (absenceMultiDay && !f.endDate) { setAddReqError("Veuillez indiquer une date de fin."); return; }
 
+    let retardMinutes = 0;
+    if (isRetard) {
+      retardMinutes = (parseInt(f.retardH, 10) || 0) * 60 + (parseInt(f.retardM, 10) || 0);
+      if (retardMinutes <= 0) { setAddReqError("Veuillez indiquer la durée du retard."); return; }
+    }
+
     // Calcul durée depuis les horaires si renseignés
     let days = 0.5;
     let durationLabel = "";
+    let durationMinutes = null;
     if (absenceMultiDay) {
       days = countWorkingDays(f.startDate, f.endDate) || 1;
+    } else if (isRetard) {
+      durationMinutes = retardMinutes;
+      days = Math.round(retardMinutes / 60 * 100) / 100;
+      const h = Math.floor(retardMinutes / 60), m = retardMinutes % 60;
+      durationLabel = `${h}h${m > 0 ? String(m).padStart(2,"0") : ""}`;
     } else if (useHoraire) {
       const [dh, dm] = f.heureDebut.split(":").map(Number);
       const [fh, fm] = f.heureFin.split(":").map(Number);
@@ -165,7 +177,7 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
 
     const endDate = (isHalfDay || isRetard || (isAbsence && !absenceMultiDay)) ? f.startDate : f.endDate;
     const reasonFinal = f.reason.trim() || (durationLabel ? `Durée : ${durationLabel}` : "");
-    const heureInfo = useHoraire ? ` · ${f.heureDebut}–${f.heureFin}` : "";
+    const heureInfo = isRetard ? ` · ${durationLabel}` : (useHoraire ? ` · ${f.heureDebut}–${f.heureFin}` : "");
 
     // Le salarié a-t-il déjà une demande active sur cette période ? On garde la modale
     // ouverte pour que le responsable puisse voir son planning (ci-dessous) et corriger.
@@ -181,14 +193,14 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
 
     onAddRequest({
       userId: f.userId, type: f.type, subType: f.subType,
-      startDate: f.startDate, endDate, days,
+      startDate: f.startDate, endDate, days, durationMinutes,
       reason: reasonFinal || (isRetard ? "Retard" : "Absence"),
       absenceMotif: f.absenceMotif,
       heureDebut: f.heureDebut, heureFin: f.heureFin,
       status: "approved",
       comment: `Saisi par le responsable${heureInfo}`,
     });
-    setAddReqForm({ userId: "", type: "absence", subType: "full", startDate: "", endDate: "", reason: "", absenceMotif: "", heureDebut: "", heureFin: "" });
+    setAddReqForm({ userId: "", type: "absence", subType: "full", startDate: "", endDate: "", reason: "", absenceMotif: "", heureDebut: "", heureFin: "", retardH: "", retardM: "" });
     setAddReqError(""); setShowAddRequest(false);
   };
 
@@ -811,8 +823,26 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
               </div>
             );
           })()}
-          {/* Horaires pour retard et absence */}
-          {(addReqForm.type === "retard" || addReqForm.type === "absence") && (
+          {/* Durée du retard : obligatoire */}
+          {addReqForm.type === "retard" && (
+            <div style={mfld}>
+              <label style={mlbl}>Durée du retard *</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", color: "#888", display: "block", marginBottom: "3px" }}>Heures</label>
+                  <input style={minp} type="number" min="0" max="23" step="1" value={addReqForm.retardH}
+                    onChange={e => setAddReqForm({...addReqForm, retardH: e.target.value})} placeholder="0" />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", color: "#888", display: "block", marginBottom: "3px" }}>Minutes</label>
+                  <input style={minp} type="number" min="0" max="59" step="1" value={addReqForm.retardM}
+                    onChange={e => setAddReqForm({...addReqForm, retardM: e.target.value})} placeholder="0" />
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Horaires pour absence : optionnel */}
+          {addReqForm.type === "absence" && (
             <div style={mfld}>
               <label style={mlbl}>Horaires <span style={{ color: "#aaa", fontWeight: "400" }}>(optionnel — calcul automatique de la durée)</span></label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>

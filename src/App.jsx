@@ -87,6 +87,9 @@ export default function App() {
       status: r.status,
       comment: r.comment || "",
       absenceMotif: r.absence_motif ?? r.absenceMotif ?? "",
+      heureDebut: r.heure_debut ?? r.heureDebut ?? "",
+      heureFin: r.heure_fin ?? r.heureFin ?? "",
+      durationMinutes: r.duration_minutes ?? r.durationMinutes ?? null,
       createdAt: (r.created_at ?? r.createdAt ?? "").split("T")[0],
       chefValidatedBy: r.chef_validated_by ?? r.chefValidatedBy ?? null,
       validatedBy:     r.validated_by     ?? r.validatedBy     ?? null,
@@ -233,6 +236,9 @@ export default function App() {
           absence_motif: reqData.absenceMotif || "",
           status: reqData.status || "pending",
           comment: reqData.comment || "",
+          heure_debut: reqData.heureDebut || "",
+          heure_fin: reqData.heureFin || "",
+          duration_minutes: reqData.durationMinutes ?? null,
           created_at: new Date().toISOString(),
         });
         const insertedNorm = normalizeRequests([inserted])[0];
@@ -521,6 +527,9 @@ export default function App() {
         if (updates.endDate !== undefined) dbFields.end_date = updates.endDate;
         if (updates.days !== undefined) dbFields.days = updates.days;
         if (updates.subType !== undefined) dbFields.sub_type = updates.subType;
+        if (updates.heureDebut !== undefined) dbFields.heure_debut = updates.heureDebut;
+        if (updates.heureFin !== undefined) dbFields.heure_fin = updates.heureFin;
+        if (updates.durationMinutes !== undefined) dbFields.duration_minutes = updates.durationMinutes;
         if (Object.keys(dbFields).length > 0) await editRequest(reqId, dbFields);
       } catch (e) { console.error("editRequest:", e); }
     }
