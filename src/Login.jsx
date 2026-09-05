@@ -47,15 +47,6 @@ export default function Login({ onLogin }) {
             {loading ? "Connexion…" : "Se connecter"}
           </button>
         </form>
-
-        <div style={styles.hint}>
-          <p style={styles.hintTitle}>Comptes de démonstration</p>
-          <div style={styles.hintGrid}>
-            <div style={styles.hintItem}><strong>Salarié :</strong> marie.dupont / password1</div>
-            <div style={styles.hintItem}><strong>Responsable :</strong> alice.lefebvre / manager1</div>
-            <div style={styles.hintItem}><strong>Admin RH :</strong> admin / admin123</div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -74,8 +65,4 @@ const styles = {
   input: { width: "100%", padding: "10px 14px", border: "1.5px solid #e0e0e0", borderRadius: "10px", fontSize: "15px", outline: "none", boxSizing: "border-box", fontFamily: "'DM Sans', sans-serif" },
   error: { background: "#FCEBEB", color: "#A32D2D", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", marginBottom: "1rem" },
   btn: { width: "100%", padding: "12px", background: "linear-gradient(135deg, #1D9E75, #0F6E56)", color: "#fff", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", marginTop: "8px", fontFamily: "'DM Sans', sans-serif" },
-  hint: { marginTop: "1.5rem", background: "#f8f9fa", borderRadius: "10px", padding: "12px" },
-  hintTitle: { fontSize: "11px", fontWeight: "600", color: "#999", textTransform: "uppercase", letterSpacing: "0.8px", margin: "0 0 8px" },
-  hintGrid: { display: "flex", flexDirection: "column", gap: "4px" },
-  hintItem: { fontSize: "12px", color: "#555", textAlign: "left" },
 };
