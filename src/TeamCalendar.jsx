@@ -198,6 +198,18 @@ export default function TeamCalendar({ users, requests, managedDepts, teamUserId
         comment: reqData.comment,
       });
     } else {
+      // Sélection multi-jours : un jour au milieu de la plage peut déjà être occupé
+      // même si le jour de départ était libre. On garde la modale ouverte pour laisser
+      // voir le planning du salarié (affiché ci-dessous) plutôt que de fermer sans explication.
+      const conflicts = requests.filter(r =>
+        r.userId === reqData.userId &&
+        r.status !== "rejected" &&
+        r.startDate <= reqData.endDate && (r.endDate || r.startDate) >= reqData.startDate
+      );
+      if (conflicts.length > 0) {
+        setFormError(`⚠️ Ce salarié a déjà ${conflicts.length > 1 ? "des demandes" : "une demande"} sur cette période (voir son planning ci-dessus). Modifiez les dates ou annulez.`);
+        return;
+      }
       onAddRequest(reqData);
     }
     closeModal();

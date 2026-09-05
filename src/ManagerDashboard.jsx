@@ -167,6 +167,18 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
     const reasonFinal = f.reason.trim() || (durationLabel ? `Durée : ${durationLabel}` : "");
     const heureInfo = useHoraire ? ` · ${f.heureDebut}–${f.heureFin}` : "";
 
+    // Le salarié a-t-il déjà une demande active sur cette période ? On garde la modale
+    // ouverte pour que le responsable puisse voir son planning (ci-dessous) et corriger.
+    const conflicts = requests.filter(r =>
+      r.userId === f.userId &&
+      (r.status === "pending" || r.status === "chef_approved" || r.status === "approved") &&
+      r.startDate <= endDate && (r.endDate || r.startDate) >= f.startDate
+    );
+    if (conflicts.length > 0) {
+      setAddReqError(`⚠️ Ce salarié a déjà ${conflicts.length > 1 ? "des demandes" : "une demande"} sur cette période (voir son planning ci-dessus). Modifiez les dates ou annulez.`);
+      return;
+    }
+
     onAddRequest({
       userId: f.userId, type: f.type, subType: f.subType,
       startDate: f.startDate, endDate, days,
@@ -720,6 +732,28 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
               </optgroup>
             </select>
           </div>
+          {addReqForm.userId && (() => {
+            const todayStr = new Date().toISOString().split("T")[0];
+            const empPlanning = requests
+              .filter(r => r.userId === addReqForm.userId && r.status !== "rejected" && (r.endDate || r.startDate) >= todayStr)
+              .sort((a, b) => a.startDate.localeCompare(b.startDate));
+            if (empPlanning.length === 0) return null;
+            const formEnd = addReqForm.endDate || addReqForm.startDate;
+            return (
+              <div style={{ background: "#F8F9FA", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "10px 12px", fontSize: "12px", marginBottom: "1rem", maxHeight: "160px", overflowY: "auto" }}>
+                <div style={{ fontWeight: "600", color: "#555", marginBottom: "6px" }}>📅 Planning du salarié</div>
+                {empPlanning.map(r => {
+                  const overlap = addReqForm.startDate && r.startDate <= formEnd && (r.endDate || r.startDate) >= addReqForm.startDate;
+                  const statusLabel = r.status === "approved" ? "validé" : r.status === "pending" ? "en attente" : "validé chef";
+                  return (
+                    <div key={r.id} style={{ padding: "3px 6px", borderRadius: "6px", marginBottom: "2px", background: overlap ? "#FCEBEB" : "transparent", color: overlap ? "#A32D2D" : "#666" }}>
+                      {overlap ? "⚠️ " : "· "}{r.startDate}{r.endDate && r.endDate !== r.startDate ? ` → ${r.endDate}` : ""} — {REQUEST_TYPES[r.type]?.label || r.type} ({statusLabel})
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
           <div style={mfld}>
             <label style={mlbl}>Type *</label>
             <select style={minp} value={addReqForm.type} onChange={e => setAddReqForm({...addReqForm, type: e.target.value, subType: "full"})}>
