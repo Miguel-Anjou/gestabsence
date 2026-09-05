@@ -732,28 +732,6 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
               </optgroup>
             </select>
           </div>
-          {addReqForm.userId && (() => {
-            const todayStr = new Date().toISOString().split("T")[0];
-            const empPlanning = requests
-              .filter(r => r.userId === addReqForm.userId && r.status !== "rejected" && (r.endDate || r.startDate) >= todayStr)
-              .sort((a, b) => a.startDate.localeCompare(b.startDate));
-            if (empPlanning.length === 0) return null;
-            const formEnd = addReqForm.endDate || addReqForm.startDate;
-            return (
-              <div style={{ background: "#F8F9FA", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "10px 12px", fontSize: "12px", marginBottom: "1rem", maxHeight: "160px", overflowY: "auto" }}>
-                <div style={{ fontWeight: "600", color: "#555", marginBottom: "6px" }}>📅 Planning du salarié</div>
-                {empPlanning.map(r => {
-                  const overlap = addReqForm.startDate && r.startDate <= formEnd && (r.endDate || r.startDate) >= addReqForm.startDate;
-                  const statusLabel = r.status === "approved" ? "validé" : r.status === "pending" ? "en attente" : "validé chef";
-                  return (
-                    <div key={r.id} style={{ padding: "3px 6px", borderRadius: "6px", marginBottom: "2px", background: overlap ? "#FCEBEB" : "transparent", color: overlap ? "#A32D2D" : "#666" }}>
-                      {overlap ? "⚠️ " : "· "}{r.startDate}{r.endDate && r.endDate !== r.startDate ? ` → ${r.endDate}` : ""} — {REQUEST_TYPES[r.type]?.label || r.type} ({statusLabel})
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
           <div style={mfld}>
             <label style={mlbl}>Type *</label>
             <select style={minp} value={addReqForm.type} onChange={e => setAddReqForm({...addReqForm, type: e.target.value, subType: "full"})}>
@@ -812,6 +790,27 @@ export default function ManagerDashboard({ user, users, requests, overtime, sett
               </div>
             )}
           </div>
+          {addReqForm.userId && addReqForm.startDate && (() => {
+            const formEnd = addReqForm.endDate || addReqForm.startDate;
+            const conflicts = requests
+              .filter(r => r.userId === addReqForm.userId && r.status !== "rejected" &&
+                r.startDate <= formEnd && (r.endDate || r.startDate) >= addReqForm.startDate)
+              .sort((a, b) => a.startDate.localeCompare(b.startDate));
+            if (conflicts.length === 0) return null;
+            return (
+              <div style={{ background: "#FCEBEB", border: "1px solid #F5C2C2", borderRadius: "8px", padding: "10px 12px", fontSize: "12px", marginBottom: "1rem", maxHeight: "160px", overflowY: "auto" }}>
+                <div style={{ fontWeight: "600", color: "#A32D2D", marginBottom: "6px" }}>⚠️ Planning du salarié — déjà occupé sur cette période</div>
+                {conflicts.map(r => {
+                  const statusLabel = r.status === "approved" ? "validé" : r.status === "pending" ? "en attente" : "validé chef";
+                  return (
+                    <div key={r.id} style={{ padding: "3px 6px", color: "#A32D2D" }}>
+                      · {r.startDate}{r.endDate && r.endDate !== r.startDate ? ` → ${r.endDate}` : ""} — {REQUEST_TYPES[r.type]?.label || r.type} ({statusLabel})
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
           {/* Horaires pour retard et absence */}
           {(addReqForm.type === "retard" || addReqForm.type === "absence") && (
             <div style={mfld}>
