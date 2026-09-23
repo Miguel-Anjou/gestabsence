@@ -10,11 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase REST API
+        # Les tables ne sont plus accessibles avec la clé anon (sécurisation du
+        # 23/09/2026) : on appelle la RPC de connexion avec des identifiants
+        # bidon. Elle interroge la base, renvoie null (HTTP 200) et n'écrit rien.
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://scqwvjvhmqifbhchlnqv.supabase.co/rest/v1/users?select=id&limit=1" \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "https://scqwvjvhmqifbhchlnqv.supabase.co/rest/v1/rpc/app_login" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"p_email":"__keepalive__","p_password":"x"}')
           echo "Supabase responded with HTTP $STATUS"
         env:
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjcXd2anZobXFpZmJoY2hsbnF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MTM1MjYsImV4cCI6MjA5MzE4OTUyNn0.nFKkCaufwDlDgI1AMPKB0axQTDbTTUTNUH0HRtyilWo
